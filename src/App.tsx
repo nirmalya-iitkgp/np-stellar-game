@@ -715,7 +715,7 @@ export default function App() {
                                         </div>
                                         <h3 className="text-[9px] sm:text-xs font-bold text-rose-400 uppercase tracking-[0.2em] sm:tracking-[0.25em] mb-2 sm:mb-3">The Threshold</h3>
                                         <p className="text-[10px] sm:text-[13px] text-slate-400 leading-relaxed font-light">
-                                            **1.4 Solar Masses**. The barrier of survival. Cross it to burn in a Supernova flash, or stay beneath to endure.
+                                            <span className="text-rose-300 font-mono font-bold">1.4 M☉</span>. The barrier of survival. Cross it to burn in a Supernova flash, or stay beneath to endure.
                                         </p>
                                     </motion.div>
                                 </div>
