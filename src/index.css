@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@theme {
+  --shadow-neumorphic-well: inset 15px 15px 30px #060a12, inset -15px -15px 30px #182442;
+  --shadow-nucleus: 6px 6px 12px #060a12, -6px -6px 12px #182442;
+  --shadow-nucleus-active: 0 0 15px #38bdf8, inset 0 0 5px #38bdf8;
+  --font-serif: "Playfair Display", "Georgia", serif;
+}
