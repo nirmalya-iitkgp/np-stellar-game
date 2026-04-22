@@ -968,6 +968,32 @@ export default function App() {
                             </motion.div>
 
                             <motion.button 
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 2.2, duration: 1 }}
+                                onClick={() => {
+                                    setGameState('playing');
+                                    playSound(440, 'sine', 0.2, 0.3);
+                                }}
+                                className="absolute bottom-6 left-6 right-56 group hidden md:flex items-center justify-between p-3 pr-8 bg-white text-black rounded-2xl z-[110] hover:scale-[1.01] transition-all shadow-2xl active:scale-95"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center shadow-lg">
+                                        <Zap className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div className="flex flex-col text-left">
+                                        <span className="text-[10px] font-bold tracking-[0.4em] uppercase">Ignite the Void</span>
+                                        <span className="text-[8px] opacity-40 uppercase tracking-widest font-mono">Stellar Genesis Sequence</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-[9px] font-mono tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">READY</span>
+                                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                                </div>
+                            </motion.button>
+
+                            {/* Mobile Fallback Button */}
+                            <motion.button 
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 2.2, duration: 1 }}
@@ -975,12 +1001,9 @@ export default function App() {
                                     setGameState('playing');
                                     playSound(440, 'sine', 0.2, 0.3);
                                 }}
-                                className="group relative px-12 py-3.5 rounded-full bg-white text-black tracking-[0.5em] uppercase text-[9px] sm:text-[10px] font-bold hover:scale-105 transition-all duration-500 active:scale-95"
+                                className="md:hidden group relative px-12 py-3.5 rounded-full bg-white text-black tracking-[0.5em] uppercase text-[9px] font-bold hover:scale-105 transition-all duration-500 active:scale-95 mb-12"
                             >
-                                <span className="relative z-10 flex items-center gap-3">
-                                    Ignite the Void <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
-                                </span>
-                                <div className="absolute inset-x-0 -bottom-4 h-8 bg-blue-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                                Ignite the Void
                             </motion.button>
                         </div>
                     </motion.div>
