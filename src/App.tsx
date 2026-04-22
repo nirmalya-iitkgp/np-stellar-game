@@ -114,7 +114,16 @@ class Particle {
             this.radius = 15;
             // For gaining mass, only use unlocked elements (current and previous)
             const availableIndices = Array.from({ length: currentElementIdx + 1 }, (_, i) => i);
-            const targetIdx = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+            
+            // During Neutron pulse, prioritize heavy elements for mass gain
+            let targetIdx;
+            if (currentElementIdx >= ELEMENTS.length - 1 && Math.random() > 0.3) {
+                // 70% chance to be the heaviest available element (Iron) during endgame
+                targetIdx = currentElementIdx;
+            } else {
+                targetIdx = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+            }
+            
             const element = ELEMENTS[targetIdx];
             
             this.color = element.color;
@@ -162,7 +171,6 @@ export default function App() {
     const [showHelp, setShowHelp] = useState(false);
     const [showNerdScience, setShowNerdScience] = useState(false);
 
-    const [neutronScore, setNeutronScore] = useState(0);
     const [spectralShift, setSpectralShift] = useState(0); // -100 (Blue/Slow) to 100 (Red/Fast)
     const [shieldTime, setShieldTime] = useState(0);
     const [nodes, setNodes] = useState<{ x: number, y: number, order: number, reached: boolean }[]>([]);
@@ -171,6 +179,7 @@ export default function App() {
     const [destiny, setDestiny] = useState<null | 'dwarf' | 'supernova'>(null);
 
     const [alphasCaptured, setAlphasCaptured] = useState(0);
+    const [neutronTimeLeft, setNeutronTimeLeft] = useState(0);
     const [flareWarning, setFlareWarning] = useState(0); // 0 to 1
     const [flareActive, setFlareActive] = useState(0); // 0 to 1
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -199,6 +208,33 @@ export default function App() {
         lastNodeSpawnRef.current = Date.now();
     }, []);
 
+    // Neutron Pulse Countdown
+    useEffect(() => {
+        let interval: any;
+        if (gameState === 'neutron' && neutronTimeLeft > 0 && !isPaused) {
+            interval = setInterval(() => {
+                setNeutronTimeLeft(prev => {
+                    const next = Math.max(0, prev - 0.1);
+                    if (next <= 0) {
+                        setGameState('ascended');
+                        // Calculate final destiny after pulse
+                        setSolarMass(finalMass => {
+                            if (finalMass >= 1.4) {
+                                setDestiny('supernova');
+                            } else {
+                                setDestiny('dwarf');
+                            }
+                            return finalMass;
+                        });
+                        playSound(880, 'sine', 2, 0.5);
+                    }
+                    return next;
+                });
+            }, 100);
+        }
+        return () => clearInterval(interval);
+    }, [gameState, neutronTimeLeft, isPaused, playSound]);
+
     // Handle Resize
     useEffect(() => {
         const resize = () => {
@@ -218,7 +254,7 @@ export default function App() {
 
     // Main Game Loop
     useEffect(() => {
-        if (gameState !== 'playing' || isPaused) return;
+        if ((gameState !== 'playing' && gameState !== 'neutron') || isPaused) return;
 
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext('2d');
@@ -339,10 +375,6 @@ export default function App() {
                     setNextNodeOrder(prev => prev + 1);
                     playSound(600 + node.order * 100, 'sine', 0.1, 0.2);
                     
-                    if (gameState === 'neutron') {
-                        setNeutronScore(prev => prev + 500);
-                    }
-                    
                     if (node.order === 3) {
                         setShieldTime(8); // 8 second shield (matches powerup)
                         playSound(1000, 'square', 0.5, 0.4);
@@ -407,36 +439,31 @@ export default function App() {
             ctx.textBaseline = 'middle';
             ctx.fillText(currentElement.symbol, pX, pY);
 
-            // Helium Spawn (Difficulty Tuning #1 - Now responsive to screen size)
+            // Helium Spawn
             const areaScalar = (canvas.width * canvas.height) / (1920 * 1080);
             const difficultyScalar = difficulty === 'Nebula' ? 0.4 : (difficulty === 'Quasar' ? 1.6 : 1.0);
             const flareMultiplier = flareActive > 0 ? 2.5 : 1.0;
-            const heliumChance = (0.008 + (elementIndex * 0.012) + (gameState === 'neutron' ? 0.05 : 0)) * difficultyScalar * flareMultiplier * Math.max(0.5, areaScalar);
-            if (Math.random() < heliumChance) {
+            const heliumChance = (0.008 + (elementIndex * 0.012)) * difficultyScalar * flareMultiplier * Math.max(0.5, areaScalar);
+            if (gameState === 'playing' && Math.random() < heliumChance) {
                 particlesRef.current.push(new Particle(canvas, 'helium', elementIndex, difficulty));
             }
 
-            // High intensity Neutron pulses
-            if (gameState === 'neutron' && Math.random() < 0.03) {
-                particlesRef.current.push(new Particle(canvas, 'alpha', elementIndex, difficulty));
-            }
-
-            // Alpha Spawn (Difficulty Tuning #5)
+            // Alpha Spawn
             const alphaScalar = difficulty === 'Nebula' ? 1.6 : (difficulty === 'Quasar' ? 0.7 : 1.0);
             const baseAlphaChance = (0.012 - (elementIndex * 0.0008)) * alphaScalar;
             const alphaChance = Math.abs(spectralShift) < 20 ? Math.max(0.004, baseAlphaChance) : 0.002;
-            if (Math.random() < alphaChance) {
+            if (gameState === 'playing' && Math.random() < alphaChance) {
                 particlesRef.current.push(new Particle(canvas, 'alpha', elementIndex, difficulty));
             }
 
-            // Isotope & Shield Powerup Spawn (Difficulty Tuning #3)
+            // Isotope & Shield Powerup Spawn
             const powerupChance = difficulty === 'Nebula' ? 0.012 : (difficulty === 'Quasar' ? 0.003 : 0.005);
             const shieldPowerupChance = difficulty === 'Nebula' ? 0.004 : (difficulty === 'Quasar' ? 0.0008 : 0.0015);
             
-            if (Math.random() < powerupChance) {
-                particlesRef.current.push(new Particle(canvas, 'isotope', elementIndex, difficulty));
+            if ((gameState === 'playing' || gameState === 'neutron') && Math.random() < (gameState === 'neutron' ? 0.15 : powerupChance)) {
+                particlesRef.current.push(new Particle(canvas, 'isotope', gameState === 'neutron' ? ELEMENTS.length - 1 : elementIndex, difficulty));
             }
-            if (Math.random() < shieldPowerupChance) {
+            if (gameState === 'playing' && Math.random() < shieldPowerupChance) {
                 particlesRef.current.push(new Particle(canvas, 'shield', elementIndex, difficulty));
             }
 
@@ -519,7 +546,7 @@ export default function App() {
                     } else if (p.type === 'isotope') {
                         // Heavy isotope adds mass based on its position in hierarchy - Progressive Mass Gain
                         const elIdx = ELEMENTS.findIndex(e => e.symbol === p.label);
-                        const massGain = 0.02 + (Math.pow(elIdx, 1.6) * 0.006);
+                        const massGain = 0.003 + (Math.pow(elIdx, 1.6) * 0.0008);
                         setSolarMass(prev => Math.min(2.0, prev + massGain));
                         playSound(800, 'sine', 0.1, 0.2);
                         setStability(prev => Math.min(100, prev + 5)); 
@@ -532,36 +559,55 @@ export default function App() {
                         // Gathered Alpha
                         playSound(440, 'triangle', 0.2, 0.3);
                         if (gameState === 'neutron') {
-                            setNeutronScore(prev => prev + 100);
                             setStability(prev => Math.min(100, prev + 2));
                         } else {
                             setAlphasCaptured(prev => {
                                 const next = prev + 1;
                                 const required = 4; // Require 4 alphas to evolve
-                                if (next >= required) {
+                                 if (next >= required) {
+                                    const isFinalEvolution = elementIndex >= ELEMENTS.length - 1;
+                                    
+                                    if (isFinalEvolution) {
+                                        // Skip the long 'evolving' state for the final transition to Neutron Pulse
+                                        setGameState('neutron');
+                                        setStability(100);
+                                        setAlphasCaptured(0);
+                                        setNeutronTimeLeft(20);
+                                        setNodes([]);
+                                        
+                                        // Spawn intensive field of mass particles immediately
+                                        const newParticles: Particle[] = [];
+                                        for(let k=0; k<100; k++) {
+                                            const np = new Particle(canvas, 'isotope', ELEMENTS.length-1, difficulty);
+                                            np.x = Math.random() * canvas.width;
+                                            np.y = Math.random() * canvas.height;
+                                            np.vx = (Math.random() - 0.5) * 2;
+                                            np.vy = (Math.random() - 0.5) * 2;
+                                            newParticles.push(np);
+                                        }
+                                        particlesRef.current = newParticles;
+                                        playSound(1200, 'square', 0.5, 0.4);
+                                        return 0;
+                                    }
+
                                     setGameState('evolving');
                                     particlesRef.current = [];
                                     setNodes([]);
                                     setStability(100); 
-                                    // Progressive evolution mass bump
-                                    setSolarMass(prevMass => prevMass + (0.01 * Math.pow(1.15, elementIndex))); 
+                                    // Progressive evolution mass bump - Tuned for difficulty
+                                    setSolarMass(prevMass => prevMass + (0.001 * Math.pow(1.1, elementIndex))); 
                                     setTimeout(() => {
                                         setElementIndex(pIdx => {
                                             const nIdx = pIdx + 1;
-                                            if (nIdx >= ELEMENTS.length - 1) {
-                                                if (solarMass >= 1.4) {
-                                                    setDestiny('supernova');
-                                                } else {
-                                                    setDestiny('dwarf');
-                                                }
-                                                setGameState('ascended');
-                                                playSound(880, 'sine', 2, 0.5);
+                                            if (nIdx >= ELEMENTS.length) {
+                                                // This block is now handled by the immediate transition above, 
+                                                // but keeping safety for the callback
                                                 return pIdx;
                                             }
                                             setGameState('playing');
                                             return nIdx;
                                         });
-                                    }, 6000); // 3x the previous 2s for poetry reading
+                                    }, 6000); 
                                     return 0;
                                 }
                                 return next;
@@ -590,7 +636,7 @@ export default function App() {
     };
 
     const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
-        if (gameState !== 'playing') return;
+        if (gameState !== 'playing' && gameState !== 'neutron') return;
         const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
         const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
         setMousePos({ x: clientX, y: clientY });
@@ -604,15 +650,6 @@ export default function App() {
         setDestiny(null);
         setGameState('intro');
         particlesRef.current = [];
-    };
-
-    const startNeutronMode = () => {
-        setGameState('neutron');
-        setStability(100);
-        setNeutronScore(0);
-        particlesRef.current = [];
-        setNodes([]);
-        playSound(1200, 'square', 0.5, 0.3);
     };
 
     return (
@@ -676,14 +713,13 @@ export default function App() {
                                 </span>
                              </div>
                              <span className={`text-[9px] font-mono ${solarMass >= 1.4 ? 'text-rose-500' : 'text-amber-400'}`}>
-                                {gameState === 'neutron' ? (15 + (neutronScore / 5000)).toFixed(1) : solarMass.toFixed(2)}
-                                {gameState === 'neutron' ? ' g/cm³' : 'M☉'}
+                                {solarMass.toFixed(2)} M☉
                              </span>
                         </div>
                         <div className="w-full h-1 bg-slate-800/50 rounded-full overflow-hidden relative">
                             <motion.div 
                                 className={`absolute left-0 top-0 bottom-0 ${solarMass >= 1.4 ? 'bg-rose-500' : 'bg-amber-400'}`}
-                                animate={{ width: gameState === 'neutron' ? `${Math.min(100, (neutronScore / 10000) * 100)}%` : `${(solarMass / 2.0) * 100}%` }}
+                                animate={{ width: `${(solarMass / 2.0) * 100}%` }}
                             />
                             {gameState !== 'neutron' && <div className="absolute left-[70%] top-0 bottom-0 w-[1px] bg-white/30" />}
                         </div>
@@ -724,13 +760,13 @@ export default function App() {
                         <Zap className="w-3 h-3 text-blue-400" />
                     </div>
                     <div className="text-2xl sm:text-3xl font-mono text-white leading-none tracking-tighter flex items-center gap-3">
-                        {gameState === 'neutron' ? 'n⁰' : currentElement.symbol}
+                        {currentElement.symbol}
                         <div className="flex flex-col">
                             <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">
-                                {gameState === 'neutron' ? 'Neutron Matter' : currentElement.name}
+                                {gameState === 'neutron' ? 'Critical Core' : currentElement.name}
                             </span>
                             <span className="text-[8px] text-slate-500">
-                                {gameState === 'neutron' ? `Freq: ${(1.2 + (neutronScore / 20000)).toFixed(2)} kHz` : `${currentElement.mass} amu`}
+                                {gameState === 'neutron' ? "FINAL COLLAPSE" : `${currentElement.mass} amu`}
                             </span>
                         </div>
                     </div>
@@ -1260,32 +1296,23 @@ export default function App() {
                                 >
                                     Begin the cycle anew
                                 </button>
-                                
-                                {destiny === 'supernova' && (
-                                    <button 
-                                        onClick={startNeutronMode}
-                                        className="px-8 py-2.5 sm:px-10 sm:py-3 rounded-full bg-[#fbbf24] text-slate-900 font-bold tracking-widest uppercase text-[10px] sm:text-xs hover:bg-white transition-all shadow-[0_0_30px_rgba(251,191,36,0.4)]"
-                                    >
-                                        Descend to Neutron Core
-                                    </button>
-                                )}
                             </div>
                         </div>
                     </motion.div>
                 )}
 
                 {gameState === 'neutron' && (
-                    <div className="absolute top-24 sm:top-28 left-1/2 -translate-x-1/2 pt-[env(safe-area-inset-top,0px)] pointer-events-none z-[100] text-center">
+                    <div className="absolute top-32 sm:top-28 left-1/2 -translate-x-1/2 pt-[env(safe-area-inset-top,0px)] pointer-events-none z-[100] text-center w-full">
                         <motion.h2 
-                            animate={{ scale: [1, 1.1, 1] }}
+                            animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
                             transition={{ duration: 0.5, repeat: Infinity }}
-                            className="text-[#fbbf24] font-mono text-2xl tracking-[0.5em] font-black uppercase"
+                            className="text-[#fbbf24] font-mono text-2xl sm:text-3xl tracking-[0.5em] font-black uppercase"
                         >
                             Neutron Pulse
                         </motion.h2>
-                        <div className="text-white font-mono text-4xl mt-2 tracking-tighter">
-                            {neutronScore.toLocaleString()}
-                        </div>
+                        <p className="text-white/50 text-[10px] uppercase tracking-widest mt-2">
+                            Critical Flux Active • {neutronTimeLeft.toFixed(1)}s Remaining
+                        </p>
                     </div>
                 )}
             </AnimatePresence>
