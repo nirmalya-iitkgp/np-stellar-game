@@ -617,7 +617,7 @@ export default function App() {
 
     return (
         <div 
-            className="relative w-full h-screen overflow-hidden bg-[#0f172a] text-slate-200 font-sans select-none touch-none"
+            className="relative w-full h-[100dvh] overflow-hidden bg-[#0f172a] text-slate-200 font-sans select-none touch-none"
             onMouseMove={handleMouseMove}
             onTouchMove={handleMouseMove}
         >
@@ -648,7 +648,7 @@ export default function App() {
             <canvas ref={canvasRef} className="absolute inset-0 z-0" />
 
             {/* UI Overlay */}
-            <div className="absolute top-0 left-0 right-0 p-3 sm:p-6 flex flex-col sm:flex-row justify-between items-center sm:items-start pointer-events-none z-50 gap-4 sm:gap-0 bg-gradient-to-b from-black/60 to-transparent">
+            <div className="absolute top-0 left-0 right-0 p-4 sm:p-6 pt-[env(safe-area-inset-top,1rem)] flex flex-col sm:flex-row justify-between items-center sm:items-start pointer-events-none z-50 gap-4 sm:gap-0 bg-gradient-to-b from-black/60 to-transparent">
                 {/* Compact Stats Group */}
                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto items-center sm:items-start">
                     <div className="bg-white/5 backdrop-blur-xl px-4 py-2 rounded-lg border border-white/10 w-full sm:w-52 shadow-2xl shrink-0">
@@ -715,7 +715,7 @@ export default function App() {
             </div>
 
             {/* Bottom Left: Atomic Data Area */}
-            <div className={`absolute bottom-6 left-6 pointer-events-none z-50 ${gameState === 'playing' ? 'md:hidden' : ''}`}>
+            <div className={`absolute bottom-6 sm:bottom-8 left-6 sm:left-8 pb-[env(safe-area-inset-bottom,0px)] pointer-events-none z-50 ${gameState === 'playing' ? 'md:hidden' : ''}`}>
                 <div className="bg-white/5 backdrop-blur-xl px-5 py-3 rounded-xl border border-white/10 text-left min-w-[140px] shadow-2xl pointer-events-auto">
                     <div className="flex items-center gap-2 mb-0.5">
                         <span className="text-[7px] sm:text-[9px] uppercase tracking-widest text-slate-300 font-bold">
@@ -767,7 +767,7 @@ export default function App() {
 
             {/* Bottom Element Progression Panel */}
             {gameState === 'playing' && (
-                <div className="absolute bottom-6 left-6 right-56 hidden md:flex items-center gap-4 p-3 pr-6 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 z-50 overflow-x-auto shadow-2xl no-scrollbar">
+                <div className="absolute bottom-6 sm:bottom-8 left-6 right-56 pb-[env(safe-area-inset-bottom,0px)] hidden md:flex items-center gap-4 p-3 pr-6 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 z-50 overflow-x-auto shadow-2xl no-scrollbar">
                     <div className="flex flex-col items-center border-r border-white/10 pr-4 mr-2 shrink-0">
                         <span className="text-[7px] uppercase tracking-[0.2em] text-blue-400 font-bold mb-1">Active</span>
                         <div className="flex items-center gap-2">
@@ -863,7 +863,7 @@ export default function App() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 flex flex-col items-center justify-start bg-[#020617]/98 backdrop-blur-3xl z-[100] p-4 sm:p-8 text-center overflow-y-auto selection:bg-blue-500/30 font-sans"
+                        className="absolute inset-0 flex flex-col items-center justify-start bg-[#020617]/98 backdrop-blur-3xl z-[100] p-4 sm:p-8 pt-[env(safe-area-inset-top,2rem)] pb-[env(safe-area-inset-bottom,2rem)] text-center overflow-y-auto selection:bg-blue-500/30 font-sans"
                     >
                         {/* Cinematic Grain/Noise Overlay */}
                         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] brightness-100 contrast-150" />
@@ -975,7 +975,7 @@ export default function App() {
                                     setGameState('playing');
                                     playSound(440, 'sine', 0.2, 0.3);
                                 }}
-                                className="absolute bottom-6 left-6 right-56 group hidden md:flex items-center justify-between p-3 pr-8 bg-white text-black rounded-2xl z-[110] hover:scale-[1.01] transition-all shadow-2xl active:scale-95"
+                                className="absolute bottom-6 sm:bottom-8 left-6 sm:left-8 right-56 pb-[env(safe-area-inset-bottom,0px)] group hidden md:flex items-center justify-between p-3 pr-8 bg-white text-black rounded-2xl z-[110] hover:scale-[1.01] transition-all shadow-2xl active:scale-95"
                             >
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center shadow-lg">
@@ -1128,7 +1128,7 @@ export default function App() {
                     <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="absolute inset-0 flex flex-col items-center justify-start sm:justify-center bg-black/95 backdrop-blur-3xl z-[150] p-6 sm:p-8 text-center overflow-y-auto"
+                        className="absolute inset-0 flex flex-col items-center justify-start sm:justify-center bg-black/95 backdrop-blur-3xl z-[150] p-6 sm:p-8 pt-[env(safe-area-inset-top,2rem)] pb-[env(safe-area-inset-bottom,2rem)] text-center overflow-y-auto"
                     >
                         <div className="flex flex-col items-center max-w-sm py-12 sm:py-24 shrink-0">
                             <AlertCircle className="w-16 h-16 sm:w-20 sm:h-20 text-rose-500 mb-6 sm:mb-8 animate-pulse" />
@@ -1148,7 +1148,7 @@ export default function App() {
                     <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className={`absolute inset-0 flex flex-col items-center justify-start sm:justify-center ${destiny === 'supernova' ? 'bg-[#1a0505]' : 'bg-[#0f172a]'} z-[200] p-6 sm:p-8 text-center overflow-y-auto`}
+                        className={`absolute inset-0 flex flex-col items-center justify-start sm:justify-center ${destiny === 'supernova' ? 'bg-[#1a0505]' : 'bg-[#0f172a]'} z-[200] p-6 sm:p-8 pt-[env(safe-area-inset-top,2rem)] pb-[env(safe-area-inset-bottom,2rem)] text-center overflow-y-auto`}
                     >
                         <div className="flex flex-col items-center py-12 sm:py-24 max-w-2xl shrink-0">
                             {destiny === 'supernova' && (
@@ -1275,7 +1275,7 @@ export default function App() {
                 )}
 
                 {gameState === 'neutron' && (
-                    <div className="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-none z-[100] text-center">
+                    <div className="absolute top-24 sm:top-28 left-1/2 -translate-x-1/2 pt-[env(safe-area-inset-top,0px)] pointer-events-none z-[100] text-center">
                         <motion.h2 
                             animate={{ scale: [1, 1.1, 1] }}
                             transition={{ duration: 0.5, repeat: Infinity }}
@@ -1292,7 +1292,7 @@ export default function App() {
 
             {/* Controls */}
 
-            <div className="absolute bottom-8 right-8 flex items-center gap-3 z-[100]">
+            <div className="absolute bottom-8 right-8 pb-[env(safe-area-inset-bottom,0px)] flex items-center gap-3 z-[100]">
                 {gameState === 'playing' && (
                     <button 
                         onClick={() => setIsPaused(!isPaused)}
@@ -1332,9 +1332,9 @@ export default function App() {
                             initial={{ scale: 0.9, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.9, y: 20 }}
-                            className="bg-slate-900 border border-white/10 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden shadow-2xl no-scrollbar"
+                            className="bg-slate-900 border border-white/10 rounded-3xl w-full max-w-4xl max-h-[85dvh] overflow-y-auto overflow-x-hidden shadow-2xl no-scrollbar"
                         >
-                            <div className="p-8 sm:p-12 relative">
+                            <div className="p-8 sm:p-12 pb-[env(safe-area-inset-bottom,2rem)] pt-[env(safe-area-inset-top,2rem)] relative">
                                 <button 
                                     onClick={() => setShowHelp(false)}
                                     className="absolute top-6 right-6 p-2 text-slate-400 hover:text-white transition-colors"
