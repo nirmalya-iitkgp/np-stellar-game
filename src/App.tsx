@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Shield, Zap, Sparkles, Activity, Volume2, VolumeX, AlertCircle, Waves, Scale, Gem, Flame, ArrowRight } from 'lucide-react';
+import { Shield, Zap, Sparkles, Activity, Volume2, VolumeX, AlertCircle, Scale, Gem, Flame, ArrowRight, Pause, Play, HelpCircle, ChevronDown, ChevronUp, BookOpen, Atom, Cpu } from 'lucide-react';
 
 // --- AUDIO ENGINE ---
 const createAudioContext = () => {
@@ -44,18 +44,18 @@ const HELIUM_RED = '#f43f5e';
 const ALPHA_BLUE = '#38bdf8';
 
 const ELEMENTS = [
-    { symbol: 'C', mass: 12, name: 'Carbon', color: '#fbbf24', radius: 40 },
-    { symbol: 'O', mass: 16, name: 'Oxygen', color: '#10b981', radius: 42, poem: ["The very breath that sustains my frame", "Is forged in the heat of your sacred flame."] },
-    { symbol: 'Ne', mass: 20, name: 'Neon', color: '#bfdbfe', radius: 44, poem: ["Like neon signs in a midnight street", "My heart glows bright whenever we meet."] },
-    { symbol: 'Mg', mass: 24, name: 'Magnesium', color: '#c084fc', radius: 46, poem: ["A brilliance caught in a sudden spark", "You light the path within the dark."] },
-    { symbol: 'Si', mass: 28, name: 'Silicon', color: '#fb923c', radius: 48, poem: ["Stone and glass and ancient earth", "From your solid step, the worlds find birth."] },
-    { symbol: 'S', mass: 32, name: 'Sulfur', color: '#facc15', radius: 50, poem: ["Yellow dust in the cosmic wind", "Where transformation's soul is pinned."] },
-    { symbol: 'Ar', mass: 36, name: 'Argon', color: '#818cf8', radius: 52, poem: ["Silent, noble, drifting free", "A ghost of light in a velvet sea."] },
-    { symbol: 'Ca', mass: 40, name: 'Calcium', color: '#fca5a5', radius: 54, poem: ["The bone that builds the strength of life", "Unyielding force through starlit strife."] },
-    { symbol: 'Ti', mass: 44, name: 'Titanium', color: '#94a3b8', radius: 56, poem: ["Strength of gods and steel of suns", "Where the river of creation runs."] },
-    { symbol: 'Cr', mass: 48, name: 'Chromium', color: '#d1d5db', radius: 58, poem: ["Gleaming silver, polished bright", "Mirroring the stars of night."] },
-    { symbol: 'Mn', mass: 52, name: 'Manganese', color: '#64748b', radius: 60, poem: ["The subtle shift, the hidden weight", "Before the door of iron fate."] },
-    { symbol: 'Fe', mass: 56, name: 'Iron', color: '#475569', radius: 62, poem: ["The final bond where all currents cease", "In your steady core, I find my peace."] },
+    { symbol: 'C', mass: 12, name: 'Carbon', color: '#f59e0b', radius: 32 },
+    { symbol: 'O', mass: 16, name: 'Oxygen', color: '#38bdf8', radius: 34, poem: ["The very breath that sustains my frame", "Is forged in the heat of your sacred flame."] },
+    { symbol: 'Ne', mass: 20, name: 'Neon', color: '#ff4d00', radius: 36, poem: ["Like neon signs in a midnight street", "My heart glows bright whenever we meet."] },
+    { symbol: 'Mg', mass: 24, name: 'Magnesium', color: '#ffffff', radius: 38, poem: ["A brilliance caught in a sudden spark", "You light the path within the dark."] },
+    { symbol: 'Si', mass: 28, name: 'Silicon', color: '#475569', radius: 40, poem: ["Stone and glass and ancient earth", "From your solid step, the worlds find birth."] },
+    { symbol: 'S', mass: 32, name: 'Sulfur', color: '#fbbf24', radius: 41, poem: ["Yellow dust in the cosmic wind", "Where transformation's soul is pinned."] },
+    { symbol: 'Ar', mass: 36, name: 'Argon', color: '#a855f7', radius: 42, poem: ["Silent, noble, drifting free", "A ghost of light in a velvet sea."] },
+    { symbol: 'Ca', mass: 40, name: 'Calcium', color: '#f97316', radius: 43, poem: ["The bone that builds the strength of life", "Unyielding force through starlit strife."] },
+    { symbol: 'Ti', mass: 44, name: 'Titanium', color: '#cbd5e1', radius: 44, poem: ["Strength of gods and steel of suns", "Where the river of creation runs."] },
+    { symbol: 'Cr', mass: 48, name: 'Chromium', color: '#94a3b8', radius: 45, poem: ["Gleaming silver, polished bright", "Mirroring the stars of night."] },
+    { symbol: 'Mn', mass: 52, name: 'Manganese', color: '#64748b', radius: 46, poem: ["The subtle shift, the hidden weight", "Before the door of iron fate."] },
+    { symbol: 'Fe', mass: 56, name: 'Iron', color: '#b91c1c', radius: 47, poem: ["The final bond where all currents cease", "In your steady core, I find my peace."] },
 ];
 
 const GOLD_ELEMENT = { symbol: 'Au', mass: 197, name: 'Gold', color: '#fbbf24', radius: 80, poem: ["Born of a crash where the heavens fold", "A love this rare is paved in gold."] };
@@ -66,22 +66,23 @@ class Particle {
     y: number;
     vx: number;
     vy: number;
-    type: 'helium' | 'alpha' | 'isotope';
+    type: 'helium' | 'alpha' | 'isotope' | 'shield';
     radius: number;
     color: string;
     glow: number;
     label: string = '';
 
-    constructor(canvas: HTMLCanvasElement, type: 'helium' | 'alpha' | 'isotope') {
+    constructor(canvas: HTMLCanvasElement, type: 'helium' | 'alpha' | 'isotope' | 'shield', currentElementIdx: number, difficulty: 'Nebula' | 'Stellar' | 'Quasar') {
         this.type = type;
         const isMobile = window.innerWidth < 640;
+        const diffMultiplier = difficulty === 'Nebula' ? 0.7 : (difficulty === 'Quasar' ? 1.3 : 1.0);
         
         if (isMobile && type === 'helium') {
             // Mobile specific: Helium streams from the top
             this.x = Math.random() * canvas.width;
             this.y = -20;
             this.vx = (Math.random() - 0.5) * 1.5;
-            this.vy = Math.random() * 2 + 2;
+            this.vy = (Math.random() * 2 + 1.5) * diffMultiplier;
         } else {
             const side = Math.floor(Math.random() * 4);
             if (side === 0) { this.x = Math.random() * canvas.width; this.y = -20; }
@@ -90,7 +91,8 @@ class Particle {
             else { this.x = -20; this.y = Math.random() * canvas.height; }
 
             const angle = Math.atan2(canvas.height / 2 - this.y, canvas.width / 2 - this.x) + (Math.random() - 0.5) * 0.5;
-            const speed = type === 'helium' ? Math.random() * 2 + 3 : (type === 'alpha' ? Math.random() * 0.5 + 1 : Math.random() * 0.8 + 1.2);
+            const baseSpeed = type === 'helium' ? Math.random() * 2 + 2.5 : (type === 'alpha' ? Math.random() * 0.5 + 0.8 : (type === 'shield' ? 1.2 : Math.random() * 0.8 + 1.0));
+            const speed = baseSpeed * diffMultiplier;
             this.vx = Math.cos(angle) * speed;
             this.vy = Math.sin(angle) * speed;
         }
@@ -103,12 +105,20 @@ class Particle {
             this.radius = 12;
             this.color = ALPHA_BLUE;
             this.glow = 15;
+        } else if (type === 'shield') {
+            this.radius = 14;
+            this.color = '#38bdf8';
+            this.label = '◈';
+            this.glow = 25;
         } else {
             this.radius = 15;
-            const subType = Math.random();
-            if (subType < 0.3) { this.color = '#10b981'; this.label = 'O'; }
-            else if (subType < 0.6) { this.color = '#bfdbfe'; this.label = 'Ne'; }
-            else { this.color = '#fb923c'; this.label = 'Si'; }
+            // For gaining mass, only use unlocked elements (current and previous)
+            const availableIndices = Array.from({ length: currentElementIdx + 1 }, (_, i) => i);
+            const targetIdx = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+            const element = ELEMENTS[targetIdx];
+            
+            this.color = element.color;
+            this.label = element.symbol;
             this.glow = 20;
         }
     }
@@ -141,13 +151,18 @@ class Particle {
 }
 
 export default function App() {
-    const [gameState, setGameState] = useState<'intro' | 'playing' | 'evolving' | 'collapsed' | 'ascended'>('intro');
-    const [difficulty, setDifficulty] = useState<'Novice' | 'Commander' | 'Destroyer'>('Commander');
+    const [gameState, setGameState] = useState<'intro' | 'playing' | 'evolving' | 'collapsed' | 'ascended' | 'neutron'>('intro');
+    const [difficulty, setDifficulty] = useState<'Nebula' | 'Stellar' | 'Quasar'>('Stellar');
     const [stability, setStability] = useState(100);
     const [elementIndex, setElementIndex] = useState(0);
     const [isMuted, setIsMuted] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
+    const [showHelp, setShowHelp] = useState(false);
+    const [showNerdScience, setShowNerdScience] = useState(false);
+
+    const [neutronScore, setNeutronScore] = useState(0);
     const [spectralShift, setSpectralShift] = useState(0); // -100 (Blue/Slow) to 100 (Red/Fast)
     const [shieldTime, setShieldTime] = useState(0);
     const [nodes, setNodes] = useState<{ x: number, y: number, order: number, reached: boolean }[]>([]);
@@ -156,8 +171,11 @@ export default function App() {
     const [destiny, setDestiny] = useState<null | 'dwarf' | 'supernova'>(null);
 
     const [alphasCaptured, setAlphasCaptured] = useState(0);
+    const [flareWarning, setFlareWarning] = useState(0); // 0 to 1
+    const [flareActive, setFlareActive] = useState(0); // 0 to 1
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const particlesRef = useRef<Particle[]>([]);
+    const trailRef = useRef<{x: number, y: number, size: number}[]>([]);
     const frameRef = useRef<number>(0);
     const playerRef = useRef({ x: 0, y: 0, vx: 0, vy: 0 });
     const lastNodeSpawnRef = useRef<number>(Date.now());
@@ -200,7 +218,7 @@ export default function App() {
 
     // Main Game Loop
     useEffect(() => {
-        if (gameState !== 'playing') return;
+        if (gameState !== 'playing' || isPaused) return;
 
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext('2d');
@@ -213,9 +231,10 @@ export default function App() {
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Path-based aesthetics
+            // Background aesthetically adapts to difficulty
             const isSupernovaPath = solarMass >= 1.4;
-            const bgStart = isSupernovaPath ? '#270c12' : '#1e293b';
+            const difficultyBgTint = difficulty === 'Nebula' ? '#0f172a' : (difficulty === 'Quasar' ? '#0a0a0a' : '#1e293b');
+            const bgStart = isSupernovaPath ? '#270c12' : difficultyBgTint;
             const bgEnd = isSupernovaPath ? '#0f0507' : '#0f172a';
 
             // Draw Background Gradients
@@ -227,7 +246,8 @@ export default function App() {
 
             // Momentum Physics Engine
             const drag = 0.94;
-            const massEffect = 1 + (currentElement.radius / 100) + (solarMass - 0.5);
+            const sizeMultiplier = difficulty === 'Nebula' ? 0.8 : (difficulty === 'Quasar' ? 1.15 : 1.0);
+            const massEffect = 1 + ((currentElement.radius * sizeMultiplier) / 100) + (solarMass - 0.5);
             const spring = 0.05 / massEffect;
             
             const ax = (mousePos.x - playerRef.current.x) * spring;
@@ -238,20 +258,55 @@ export default function App() {
             playerRef.current.x += playerRef.current.vx;
             playerRef.current.y += playerRef.current.vy;
 
+            // Draw Trail
+            const pR = currentElement.radius * sizeMultiplier;
+            trailRef.current.push({ x: playerRef.current.x, y: playerRef.current.y, size: pR });
+            if (trailRef.current.length > 15) trailRef.current.shift();
+
+            trailRef.current.forEach((pos, i) => {
+                const ratio = i / trailRef.current.length;
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, pR * ratio * 0.8, 0, Math.PI * 2);
+                ctx.fillStyle = `${currentElement.color}${Math.floor(ratio * 40).toString(16).padStart(2, '0')}`;
+                ctx.fill();
+            });
+
             // Spectral Meter calculation (based on velocity)
             const speed = Math.sqrt(playerRef.current.vx ** 2 + playerRef.current.vy ** 2);
             const targetShift = (speed - 5) * 15; // Centered around speed 5
             setSpectralShift(prev => prev + (Math.max(-100, Math.min(100, targetShift)) - prev) * 0.1);
 
-            // Update Shield
+            // Update Shield & Healing & Flares
             if (shieldTime > 0) {
                 setShieldTime(prev => Math.max(0, prev - 0.016));
+            }
+
+            // Auto-healing logic
+            const healingRate = difficulty === 'Nebula' ? 0.04 : (difficulty === 'Stellar' ? 0.02 : 0.005);
+            setStability(prev => Math.min(100, prev + healingRate));
+
+            // Solar Flare Logic
+            if (flareWarning > 0) {
+                setFlareWarning(prev => prev - 1);
+                if (flareWarning === 1) {
+                    setFlareActive(400); // Activate for 400 frames
+                    playSound(200, 'sawtooth', 1, 0.3);
+                }
+            } else if (flareActive > 0) {
+                setFlareActive(prev => prev - 1);
+            } else {
+                const flareChance = difficulty === 'Nebula' ? 0.0001 : (difficulty === 'Stellar' ? 0.0003 : 0.0008);
+                if (Math.random() < flareChance) {
+                    setFlareWarning(200); // 200 frame warning
+                    spawnNodes(); // Defensive sequence spawn
+                    playSound(300, 'sine', 0.5, 0.2);
+                }
             }
 
             // Draw Convection Nodes
             const pX = playerRef.current.x;
             const pY = playerRef.current.y;
-            const pR = currentElement.radius;
+            // pR is already declared above for the trail
 
             nodes.forEach(node => {
                 if (node.reached) return;
@@ -284,16 +339,22 @@ export default function App() {
                     setNextNodeOrder(prev => prev + 1);
                     playSound(600 + node.order * 100, 'sine', 0.1, 0.2);
                     
+                    if (gameState === 'neutron') {
+                        setNeutronScore(prev => prev + 500);
+                    }
+                    
                     if (node.order === 3) {
-                        setShieldTime(5); // 5 second shield
+                        setShieldTime(8); // 8 second shield (matches powerup)
                         playSound(1000, 'square', 0.5, 0.4);
                         setNodes([]);
                     }
                 }
             });
 
-            // Node Spawning Interval
-            if (Date.now() - lastNodeSpawnRef.current > 45000) {
+            // Node Spawning Interval (Now linked to Solar Flares primarily)
+            // We keep a fallback long-timer for practice
+            const spawnInterval = gameState === 'neutron' ? 5000 : 60000;
+            if (Date.now() - lastNodeSpawnRef.current > spawnInterval && flareWarning === 0 && flareActive === 0) {
                 spawnNodes();
             }
 
@@ -346,24 +407,37 @@ export default function App() {
             ctx.textBaseline = 'middle';
             ctx.fillText(currentElement.symbol, pX, pY);
 
-            // Helium Spawn
-            const difficultyScalar = difficulty === 'Novice' ? 0.6 : (difficulty === 'Destroyer' ? 1.4 : 1.0);
-            const heliumChance = (0.008 + (elementIndex * 0.012)) * difficultyScalar;
+            // Helium Spawn (Difficulty Tuning #1 - Now responsive to screen size)
+            const areaScalar = (canvas.width * canvas.height) / (1920 * 1080);
+            const difficultyScalar = difficulty === 'Nebula' ? 0.4 : (difficulty === 'Quasar' ? 1.6 : 1.0);
+            const flareMultiplier = flareActive > 0 ? 2.5 : 1.0;
+            const heliumChance = (0.008 + (elementIndex * 0.012) + (gameState === 'neutron' ? 0.05 : 0)) * difficultyScalar * flareMultiplier * Math.max(0.5, areaScalar);
             if (Math.random() < heliumChance) {
-                particlesRef.current.push(new Particle(canvas, 'helium'));
+                particlesRef.current.push(new Particle(canvas, 'helium', elementIndex, difficulty));
             }
 
-            // Alpha Spawn (Dynamic rarity - gets harder at higher elements)
-            const alphaScalar = difficulty === 'Novice' ? 1.2 : (difficulty === 'Destroyer' ? 0.8 : 1.0);
+            // High intensity Neutron pulses
+            if (gameState === 'neutron' && Math.random() < 0.03) {
+                particlesRef.current.push(new Particle(canvas, 'alpha', elementIndex, difficulty));
+            }
+
+            // Alpha Spawn (Difficulty Tuning #5)
+            const alphaScalar = difficulty === 'Nebula' ? 1.6 : (difficulty === 'Quasar' ? 0.7 : 1.0);
             const baseAlphaChance = (0.012 - (elementIndex * 0.0008)) * alphaScalar;
             const alphaChance = Math.abs(spectralShift) < 20 ? Math.max(0.004, baseAlphaChance) : 0.002;
             if (Math.random() < alphaChance) {
-                particlesRef.current.push(new Particle(canvas, 'alpha'));
+                particlesRef.current.push(new Particle(canvas, 'alpha', elementIndex, difficulty));
             }
 
-            // Isotope Spawn (Heavy elements for mass path)
-            if (Math.random() < 0.005) {
-                particlesRef.current.push(new Particle(canvas, 'isotope'));
+            // Isotope & Shield Powerup Spawn (Difficulty Tuning #3)
+            const powerupChance = difficulty === 'Nebula' ? 0.012 : (difficulty === 'Quasar' ? 0.003 : 0.005);
+            const shieldPowerupChance = difficulty === 'Nebula' ? 0.004 : (difficulty === 'Quasar' ? 0.0008 : 0.0015);
+            
+            if (Math.random() < powerupChance) {
+                particlesRef.current.push(new Particle(canvas, 'isotope', elementIndex, difficulty));
+            }
+            if (Math.random() < shieldPowerupChance) {
+                particlesRef.current.push(new Particle(canvas, 'shield', elementIndex, difficulty));
             }
 
             // Update & Draw Particles
@@ -371,7 +445,11 @@ export default function App() {
                 const p = particlesRef.current[i];
                 if (!p) continue;
                 
-                // Gravitational Pull Logic (Helium pulled towards heavy mass)
+                // Neutron Mode Velocity Boost
+                if (gameState === 'neutron') {
+                    p.vx *= 1.001; 
+                    p.vy *= 1.001;
+                }
                 if (p.type === 'helium' && solarMass > 1.0) {
                     const dx = pX - p.x;
                     const dy = pY - p.y;
@@ -439,44 +517,56 @@ export default function App() {
                             });
                         }
                     } else if (p.type === 'isotope') {
-                        // Heavy isotope adds mass
-                        const massGain = p.label === 'O' ? 0.04 : (p.label === 'Ne' ? 0.06 : 0.08);
+                        // Heavy isotope adds mass based on its position in hierarchy - Progressive Mass Gain
+                        const elIdx = ELEMENTS.findIndex(e => e.symbol === p.label);
+                        const massGain = 0.02 + (Math.pow(elIdx, 1.6) * 0.006);
                         setSolarMass(prev => Math.min(2.0, prev + massGain));
                         playSound(800, 'sine', 0.1, 0.2);
                         setStability(prev => Math.min(100, prev + 5)); 
+                    } else if (p.type === 'shield') {
+                        // Magnetic Shield Powerup
+                        setShieldTime(8);
+                        playSound(1200, 'sine', 0.3, 0.4);
+                        setStability(prev => Math.min(100, prev + 10));
                     } else {
                         // Gathered Alpha
                         playSound(440, 'triangle', 0.2, 0.3);
-                        setAlphasCaptured(prev => {
-                            const next = prev + 1;
-                            const required = 4; // Require 4 alphas to evolve
-                            if (next >= required) {
-                                setGameState('evolving');
-                                particlesRef.current = [];
-                                setNodes([]);
-                                setStability(100); 
-                                setSolarMass(prevMass => prevMass + 0.012); 
-                                setTimeout(() => {
-                                    setElementIndex(pIdx => {
-                                        const nIdx = pIdx + 1;
-                                        if (nIdx >= ELEMENTS.length - 1) {
-                                            if (solarMass >= 1.4) {
-                                                setDestiny('supernova');
-                                            } else {
-                                                setDestiny('dwarf');
+                        if (gameState === 'neutron') {
+                            setNeutronScore(prev => prev + 100);
+                            setStability(prev => Math.min(100, prev + 2));
+                        } else {
+                            setAlphasCaptured(prev => {
+                                const next = prev + 1;
+                                const required = 4; // Require 4 alphas to evolve
+                                if (next >= required) {
+                                    setGameState('evolving');
+                                    particlesRef.current = [];
+                                    setNodes([]);
+                                    setStability(100); 
+                                    // Progressive evolution mass bump
+                                    setSolarMass(prevMass => prevMass + (0.01 * Math.pow(1.15, elementIndex))); 
+                                    setTimeout(() => {
+                                        setElementIndex(pIdx => {
+                                            const nIdx = pIdx + 1;
+                                            if (nIdx >= ELEMENTS.length - 1) {
+                                                if (solarMass >= 1.4) {
+                                                    setDestiny('supernova');
+                                                } else {
+                                                    setDestiny('dwarf');
+                                                }
+                                                setGameState('ascended');
+                                                playSound(880, 'sine', 2, 0.5);
+                                                return pIdx;
                                             }
-                                            setGameState('ascended');
-                                            playSound(880, 'sine', 2, 0.5);
-                                            return pIdx;
-                                        }
-                                        setGameState('playing');
-                                        return nIdx;
-                                    });
-                                }, 2000);
-                                return 0;
-                            }
-                            return next;
-                        });
+                                            setGameState('playing');
+                                            return nIdx;
+                                        });
+                                    }, 6000); // 3x the previous 2s for poetry reading
+                                    return 0;
+                                }
+                                return next;
+                            });
+                        }
                     }
                     continue;
                 }
@@ -492,7 +582,7 @@ export default function App() {
 
         frameRef.current = requestAnimationFrame(loop);
         return () => cancelAnimationFrame(frameRef.current);
-    }, [gameState, mousePos, elementIndex, currentElement, playSound, nodes, nextNodeOrder, shieldTime, spectralShift, spawnNodes, solarMass]);
+    }, [gameState, mousePos, elementIndex, currentElement, playSound, nodes, nextNodeOrder, shieldTime, spectralShift, spawnNodes, solarMass, difficulty, flareActive, flareWarning, isPaused]);
 
     const setStageAscended = () => {
         setGameState('ascended');
@@ -516,19 +606,52 @@ export default function App() {
         particlesRef.current = [];
     };
 
+    const startNeutronMode = () => {
+        setGameState('neutron');
+        setStability(100);
+        setNeutronScore(0);
+        particlesRef.current = [];
+        setNodes([]);
+        playSound(1200, 'square', 0.5, 0.3);
+    };
+
     return (
         <div 
             className="relative w-full h-screen overflow-hidden bg-[#0f172a] text-slate-200 font-sans select-none touch-none"
             onMouseMove={handleMouseMove}
             onTouchMove={handleMouseMove}
         >
+            {/* Chromatic Aberration Overlay for Spectral Shift */}
+            <div 
+                className="absolute inset-0 pointer-events-none z-[190] opacity-50"
+                style={{
+                    boxShadow: Math.abs(spectralShift) > 20 
+                        ? `inset 0 0 ${Math.abs(spectralShift)}px ${spectralShift > 0 ? 'rgba(255,0,0,0.4)' : 'rgba(0,0,255,0.4)'}`
+                        : 'none',
+                    filter: `contrast(${100 + Math.abs(spectralShift)/2}%)`
+                }}
+            />
+            
+            {/* Subtle Peripheral Grain for Shift Feedback */}
+            <AnimatePresence>
+                {Math.abs(spectralShift) > 50 && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: [0, 0.2, 0] }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.1, repeat: Infinity }}
+                        className={`absolute inset-0 z-[191] pointer-events-none bg-gradient-to-r ${spectralShift > 0 ? 'from-red-500/10 via-transparent to-red-500/10' : 'from-blue-500/10 via-transparent to-blue-500/10'}`}
+                    />
+                )}
+            </AnimatePresence>
+
             <canvas ref={canvasRef} className="absolute inset-0 z-0" />
 
             {/* UI Overlay */}
             <div className="absolute top-0 left-0 right-0 p-3 sm:p-6 flex flex-col sm:flex-row justify-between items-center sm:items-start pointer-events-none z-50 gap-4 sm:gap-0 bg-gradient-to-b from-black/60 to-transparent">
                 {/* Compact Stats Group */}
                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto items-center sm:items-start">
-                    <div className="bg-white/5 backdrop-blur-xl px-4 py-2 rounded-lg border border-white/10 w-full sm:w-52 shadow-2xl">
+                    <div className="bg-white/5 backdrop-blur-xl px-4 py-2 rounded-lg border border-white/10 w-full sm:w-52 shadow-2xl shrink-0">
                         <div className="flex items-center justify-between mb-1.5">
                             <div className="flex items-center gap-2">
                                 <Activity className="w-3 h-3 text-emerald-400" />
@@ -536,41 +659,33 @@ export default function App() {
                             </div>
                             <span className="text-[9px] font-mono text-emerald-400">{Math.ceil(stability)}%</span>
                         </div>
-                        <div className="w-full h-1 bg-slate-800/50 rounded-full overflow-hidden">
+                        <div className="w-full h-1 bg-slate-800/50 rounded-full overflow-hidden relative">
                             <motion.div 
-                                className={`h-full ${stability > 30 ? 'bg-emerald-500' : 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]'}`}
+                                className={`absolute left-0 top-0 bottom-0 ${stability > 30 ? 'bg-emerald-500' : 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]'}`}
                                 animate={{ width: `${stability}%` }}
                             />
                         </div>
                     </div>
 
-                    <div className="bg-white/5 backdrop-blur-xl px-4 py-2 rounded-lg border border-white/10 w-full sm:w-52 shadow-2xl">
-                        <div className="flex items-center gap-2 mb-1.5">
-                            <Waves className="w-3 h-3 text-blue-400" />
-                            <span className="text-[7px] sm:text-[9px] uppercase tracking-widest text-slate-300 font-bold">Sync</span>
-                        </div>
-                        <div className="relative w-full h-1.5 bg-slate-800/50 rounded-full overflow-hidden flex items-center justify-center">
-                            <motion.div 
-                                className="absolute w-1 h-full bg-white shadow-[0_0_8px_white] z-10"
-                                animate={{ left: `${50 + spectralShift/2}%` }}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="bg-white/5 backdrop-blur-xl px-4 py-2 rounded-lg border border-white/10 w-full sm:w-52 shadow-2xl">
+                    <div className="bg-white/5 backdrop-blur-xl px-4 py-2 rounded-lg border border-white/10 w-full sm:w-52 shadow-2xl shrink-0">
                         <div className="flex items-center justify-between mb-1.5">
                              <div className="flex items-center gap-2">
                                 <Scale className="w-3 h-3 text-amber-400" />
-                                <span className="text-[7px] sm:text-[9px] uppercase tracking-widest text-slate-300 font-bold">Mass</span>
+                                <span className="text-[7px] sm:text-[9px] uppercase tracking-widest text-slate-300 font-bold">
+                                    {gameState === 'neutron' ? 'Density' : 'Mass'}
+                                </span>
                              </div>
-                             <span className={`text-[9px] font-mono ${solarMass >= 1.4 ? 'text-rose-500' : 'text-amber-400'}`}>{solarMass.toFixed(2)}M☉</span>
+                             <span className={`text-[9px] font-mono ${solarMass >= 1.4 ? 'text-rose-500' : 'text-amber-400'}`}>
+                                {gameState === 'neutron' ? (15 + (neutronScore / 5000)).toFixed(1) : solarMass.toFixed(2)}
+                                {gameState === 'neutron' ? ' g/cm³' : 'M☉'}
+                             </span>
                         </div>
-                        <div className="relative w-full h-1 bg-slate-800/50 rounded-full overflow-hidden">
+                        <div className="w-full h-1 bg-slate-800/50 rounded-full overflow-hidden relative">
                             <motion.div 
-                                className={`h-full ${solarMass >= 1.4 ? 'bg-rose-500' : 'bg-amber-400'}`}
-                                animate={{ width: `${(solarMass / 2.0) * 100}%` }}
+                                className={`absolute left-0 top-0 bottom-0 ${solarMass >= 1.4 ? 'bg-rose-500' : 'bg-amber-400'}`}
+                                animate={{ width: gameState === 'neutron' ? `${Math.min(100, (neutronScore / 10000) * 100)}%` : `${(solarMass / 2.0) * 100}%` }}
                             />
-                            <div className="absolute left-[70%] top-0 bottom-0 w-[1px] bg-white/30" />
+                            {gameState !== 'neutron' && <div className="absolute left-[70%] top-0 bottom-0 w-[1px] bg-white/30" />}
                         </div>
                     </div>
                 </div>
@@ -587,10 +702,10 @@ export default function App() {
                             <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400 animate-pulse" />
                             <div className="flex flex-col">
                                 <span className="text-[6px] sm:text-[8px] uppercase tracking-[0.2em] text-blue-300 font-bold">Magnetic Shield</span>
-                                <div className="w-20 sm:w-24 h-1 bg-blue-900 rounded-full mt-1">
+                                <div className="w-20 sm:w-24 h-1 bg-blue-900 rounded-full mt-1 relative overflow-hidden">
                                     <motion.div 
-                                        className="h-full bg-blue-400"
-                                        animate={{ width: `${(shieldTime / 5) * 100}%` }}
+                                        className="absolute left-0 top-0 bottom-0 bg-blue-400"
+                                        animate={{ width: `${(shieldTime / 8) * 100}%` }}
                                     />
                                 </div>
                             </div>
@@ -599,38 +714,147 @@ export default function App() {
                 </div>
             </div>
 
-            {/* Bottom Left: Atomic Data */}
-            <div className="absolute bottom-6 left-6 pointer-events-none z-50">
-                <div className="bg-white/5 backdrop-blur-xl px-5 py-3 rounded-xl border border-white/10 text-left min-w-[140px] shadow-2xl">
+            {/* Bottom Left: Atomic Data Area */}
+            <div className={`absolute bottom-6 left-6 pointer-events-none z-50 ${gameState === 'playing' ? 'md:hidden' : ''}`}>
+                <div className="bg-white/5 backdrop-blur-xl px-5 py-3 rounded-xl border border-white/10 text-left min-w-[140px] shadow-2xl pointer-events-auto">
                     <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-[7px] sm:text-[9px] uppercase tracking-widest text-slate-300 font-bold">Active Nucleus</span>
+                        <span className="text-[7px] sm:text-[9px] uppercase tracking-widest text-slate-300 font-bold">
+                            {gameState === 'neutron' ? 'Pulsar State' : 'Active Nucleus'}
+                        </span>
                         <Zap className="w-3 h-3 text-blue-400" />
                     </div>
                     <div className="text-2xl sm:text-3xl font-mono text-white leading-none tracking-tighter flex items-center gap-3">
-                        {currentElement.symbol}
+                        {gameState === 'neutron' ? 'n⁰' : currentElement.symbol}
                         <div className="flex flex-col">
-                            <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">{currentElement.name}</span>
-                            <span className="text-[8px] text-slate-500">{currentElement.mass} amu</span>
+                            <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">
+                                {gameState === 'neutron' ? 'Neutron Matter' : currentElement.name}
+                            </span>
+                            <span className="text-[8px] text-slate-500">
+                                {gameState === 'neutron' ? `Freq: ${(1.2 + (neutronScore / 20000)).toFixed(2)} kHz` : `${currentElement.mass} amu`}
+                            </span>
                         </div>
                     </div>
                     
-                    {/* Alpha Progress */}
+                    {/* Alpha Progress / Pulsar Beat */}
                     <div className="mt-3 pt-2 border-t border-white/10">
                         <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-[7px] text-slate-400 uppercase tracking-widest">Fusion Step</span>
-                            <span className="text-[8px] font-mono text-blue-400">{alphasCaptured}/4</span>
+                            <span className="text-[7px] text-slate-400 uppercase tracking-widest">
+                                {gameState === 'neutron' ? 'Subatomic Flux' : 'Fusion Step'}
+                            </span>
+                            <span className="text-[8px] font-mono text-blue-400">
+                                {gameState === 'neutron' ? `${(stability / 10).toFixed(1)}%` : `${alphasCaptured}/4`}
+                            </span>
                         </div>
                         <div className="flex gap-1.5">
-                            {[...Array(4)].map((_, i) => (
-                                <div 
-                                    key={i} 
-                                    className={`h-1 w-5 rounded-full ${i < alphasCaptured ? 'bg-blue-400 shadow-[0_0_8px_rgba(56,189,248,0.5)]' : 'bg-slate-700'}`} 
+                            {gameState === 'neutron' ? (
+                                <motion.div 
+                                    animate={{ opacity: [1, 0.4, 1] }} 
+                                    transition={{ duration: 0.1, repeat: Infinity }}
+                                    className="h-1 w-full rounded-full bg-blue-400 shadow-[0_0_15px_rgba(56,189,248,0.8)]"
                                 />
-                            ))}
+                            ) : (
+                                [...Array(4)].map((_, i) => (
+                                    <div 
+                                        key={i} 
+                                        className={`h-1 w-5 rounded-full ${i < alphasCaptured ? 'bg-blue-400 shadow-[0_0_8px_rgba(56,189,248,0.5)]' : 'bg-slate-700'}`} 
+                                    />
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Bottom Element Progression Panel */}
+            {gameState === 'playing' && (
+                <div className="absolute bottom-6 left-6 right-56 hidden md:flex items-center gap-4 p-3 pr-6 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 z-50 overflow-x-auto shadow-2xl no-scrollbar">
+                    <div className="flex flex-col items-center border-r border-white/10 pr-4 mr-2 shrink-0">
+                        <span className="text-[7px] uppercase tracking-[0.2em] text-blue-400 font-bold mb-1">Active</span>
+                        <div className="flex items-center gap-2">
+                             <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-slate-900 font-black font-mono">
+                                {currentElement.symbol}
+                             </div>
+                             <div className="flex flex-col text-left">
+                                <span className="text-[10px] text-white font-bold tracking-wider">{currentElement.name}</span>
+                                <span className="text-[8px] text-slate-400">{currentElement.mass} amu</span>
+                             </div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 flex-nowrap sm:flex-wrap justify-start">
+                        {ELEMENTS.map((el, idx) => {
+                            const isNext = idx === elementIndex + 1;
+                            const isPast = idx < elementIndex;
+                            const isCurrent = idx === elementIndex;
+                            
+                            return (
+                                <div 
+                                    key={idx}
+                                    className={`relative flex flex-col items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg border transition-all ${
+                                        isCurrent 
+                                        ? 'bg-blue-500 border-blue-400 scale-105 shadow-[0_0_15px_rgba(59,130,246,0.5)]' 
+                                        : isPast 
+                                        ? 'border-white/40 bg-white/20' 
+                                        : isNext
+                                        ? 'border-white/10 bg-white/5'
+                                        : 'border-white/5 bg-transparent opacity-20 grayscale'
+                                    }`}
+                                >
+                                    {isNext && (
+                                        <div className="absolute inset-0 overflow-hidden rounded-lg pointer-events-none">
+                                            <motion.div 
+                                                className="absolute bottom-0 left-0 right-0 bg-blue-400/30"
+                                                animate={{ height: `${(alphasCaptured / 4) * 100}%` }}
+                                            />
+                                        </div>
+                                    )}
+                                    <span className={`text-[10px] sm:text-xs font-mono font-black ${isCurrent ? 'text-white' : 'text-slate-200'}`}>
+                                        {el.symbol}
+                                    </span>
+                                    {isNext && (
+                                        <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_5px_#38bdf8] animate-pulse" />
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Flare Warning */}
+            <AnimatePresence>
+                {flareWarning > 0 && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed top-24 left-1/2 -translate-x-1/2 bg-rose-950/80 backdrop-blur-xl px-6 py-3 rounded-full border border-rose-500/50 flex items-center gap-3 shadow-2xl z-[60]"
+                    >
+                        <Flame className="w-5 h-5 text-rose-500 animate-bounce" />
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-rose-300 uppercase tracking-[0.2em]">Solar Flare Imminent</span>
+                            <div className="w-32 h-1 bg-rose-900 rounded-full mt-1 overflow-hidden">
+                                <motion.div 
+                                    className="h-full bg-rose-500"
+                                    animate={{ width: `${(flareWarning / 200) * 100}%` }}
+                                />
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Flare Active Effect */}
+            <AnimatePresence>
+                {flareActive > 0 && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 0.15 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-rose-500 pointer-events-none z-[40]"
+                    />
+                )}
+            </AnimatePresence>
 
             {/* Stage Overlays */}
             <AnimatePresence mode="wait">
@@ -721,16 +945,24 @@ export default function App() {
                                 </div>
 
                                 <motion.div variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }} className="pt-10">
-                                    <div className="flex items-center justify-center gap-4 max-w-sm mx-auto p-1 bg-white/5 rounded-full border border-white/10">
-                                        {(['Novice', 'Commander', 'Destroyer'] as const).map((lvl) => (
-                                            <button
-                                                key={lvl}
-                                                onClick={() => setDifficulty(lvl)}
-                                                className={`flex-1 py-2 px-4 rounded-full text-[10px] uppercase tracking-wider transition-all ${difficulty === lvl ? 'bg-white text-black font-bold shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
-                                            >
-                                                {lvl}
-                                            </button>
-                                        ))}
+                                    <div className="flex flex-col gap-4">
+                                        <p className="text-[10px] text-blue-400 font-mono tracking-widest uppercase opacity-60">Select Stellar Genesis</p>
+                                        <div className="flex items-center justify-center gap-4 max-w-sm mx-auto p-1 bg-white/5 rounded-full border border-white/10">
+                                            {(['Nebula', 'Stellar', 'Quasar'] as const).map((lvl) => (
+                                                <button
+                                                    key={lvl}
+                                                    onClick={() => setDifficulty(lvl)}
+                                                    className={`flex-1 py-1.5 px-4 rounded-full text-[9px] uppercase tracking-widest transition-all ${difficulty === lvl ? 'bg-white text-black font-bold shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                                                >
+                                                    {lvl}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-8 mt-2">
+                                            <p className={`text-[8px] uppercase tracking-widest transition-opacity ${difficulty === 'Nebula' ? 'opacity-100 text-emerald-400' : 'opacity-0 h-0 sm:h-auto overflow-hidden'}`}>Gentle drift. Stable core.</p>
+                                            <p className={`text-[8px] uppercase tracking-widest transition-opacity ${difficulty === 'Stellar' ? 'opacity-100 text-blue-400' : 'opacity-0 h-0 sm:h-auto overflow-hidden'}`}>Rhythmic bursts. Solar flares.</p>
+                                            <p className={`text-[8px] uppercase tracking-widest transition-opacity ${difficulty === 'Quasar' ? 'opacity-100 text-rose-500' : 'opacity-0 h-0 sm:h-auto overflow-hidden'}`}>Extreme density. Void storms.</p>
+                                        </div>
                                     </div>
                                 </motion.div>
                             </motion.div>
@@ -743,10 +975,10 @@ export default function App() {
                                     setGameState('playing');
                                     playSound(440, 'sine', 0.2, 0.3);
                                 }}
-                                className="group relative px-20 py-5 rounded-full bg-white text-black tracking-[0.5em] uppercase text-[10px] sm:text-xs font-bold hover:scale-105 transition-all duration-500 active:scale-95"
+                                className="group relative px-12 py-3.5 rounded-full bg-white text-black tracking-[0.5em] uppercase text-[9px] sm:text-[10px] font-bold hover:scale-105 transition-all duration-500 active:scale-95"
                             >
                                 <span className="relative z-10 flex items-center gap-3">
-                                    Ignite the Void <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                                    Ignite the Void <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
                                 </span>
                                 <div className="absolute inset-x-0 -bottom-4 h-8 bg-blue-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                             </motion.button>
@@ -754,27 +986,120 @@ export default function App() {
                     </motion.div>
                 )}
 
-                {gameState === 'evolving' && (
-                    <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 flex flex-col items-center justify-start sm:justify-center bg-[#020617]/95 backdrop-blur-xl z-[90] p-6 sm:p-8 text-center overflow-y-auto"
-                    >
-                        <div className="flex flex-col items-center py-12 sm:py-24 shrink-0">
-                            <div className="w-24 sm:w-48 h-[1px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-30 mb-8 sm:mb-12" />
-                            <h2 className="text-[8px] sm:text-xs uppercase tracking-[0.3em] sm:tracking-[0.5em] text-blue-400 mb-2 sm:mb-4 font-bold">Synthesis Event</h2>
-                            <div className="flex flex-col gap-2 sm:gap-4">
-                                {(ELEMENTS[elementIndex + 1]?.poem || ["Evolution complete.", ""]).map((line, idx) => (
-                                    <p key={idx} className="text-base sm:text-3xl font-serif italic text-white max-w-2xl leading-relaxed px-4 sm:px-6">
-                                        {line}
-                                    </p>
+                {gameState === 'evolving' && (() => {
+                    const nextElement = ELEMENTS[elementIndex + 1] || currentElement;
+                    return (
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 flex flex-col items-center justify-start sm:justify-center bg-[#020617]/95 backdrop-blur-xl z-[90] p-6 sm:p-8 text-center overflow-y-auto"
+                        >
+                            {/* Flame Embers Animation */}
+                            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                                {[...Array(30)].map((_, i) => (
+                                    <motion.div
+                                        key={i}
+                                        initial={{ 
+                                            x: Math.random() * 100 + "%", 
+                                            y: "110%",
+                                            opacity: 0,
+                                            scale: Math.random() * 0.5 + 0.5
+                                        }}
+                                        animate={{ 
+                                            y: "-10%",
+                                            x: [
+                                                (Math.random() * 100) + "%",
+                                                (Math.random() * 100 + (Math.random() - 0.5) * 20) + "%"
+                                            ],
+                                            opacity: [0, 0.8, 0],
+                                            rotate: Math.random() * 360
+                                        }}
+                                        transition={{ 
+                                            duration: 4 + Math.random() * 6,
+                                            repeat: Infinity,
+                                            delay: Math.random() * 5,
+                                            ease: "linear"
+                                        }}
+                                        className="absolute w-1.5 h-1.5 rounded-full blur-[1px]"
+                                        style={{ 
+                                            backgroundColor: nextElement.color,
+                                            boxShadow: `0 0 12px ${nextElement.color}, 0 0 24px ${nextElement.color}`
+                                        }}
+                                    />
                                 ))}
                             </div>
-                            <div className="w-24 sm:w-48 h-[1px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-30 mt-8 sm:mb-12" />
-                        </div>
-                    </motion.div>
-                )}
+
+                            {/* Elemental Background Tinge */}
+                            <div 
+                                className="absolute inset-0 pointer-events-none opacity-20"
+                                style={{ 
+                                    background: `radial-gradient(circle at center, ${nextElement.color}44 0%, transparent 70%)` 
+                                }}
+                            />
+                            <div 
+                                className="absolute bottom-0 inset-x-0 h-64 pointer-events-none opacity-30"
+                                style={{ 
+                                    background: `linear-gradient(to top, ${nextElement.color}22 0%, transparent 100%)` 
+                                }}
+                            />
+
+                            <div className="flex flex-col items-center py-12 sm:py-24 shrink-0 relative z-10">
+                                <motion.div 
+                                    initial={{ scale: 0.8, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    className="mb-6 flex flex-col items-center"
+                                >
+                                    <div 
+                                        className="text-5xl sm:text-7xl font-mono text-white font-black mb-2 px-6 py-2 border-b-2 shadow-2xl"
+                                        style={{ borderBottomColor: nextElement.color, boxShadow: `0 15px 30px -15px ${nextElement.color}99` }}
+                                    >
+                                        {nextElement.symbol}
+                                    </div>
+                                    <div className="text-xl sm:text-2xl font-mono tracking-[0.3em] uppercase" style={{ color: nextElement.color }}>
+                                        {nextElement.name}
+                                    </div>
+                                    <div className="text-xs text-slate-500 mt-2">
+                                        Atomic Mass: {nextElement.mass} amu
+                                    </div>
+                                    {ELEMENTS[elementIndex + 2] && (
+                                        <div 
+                                            className="mt-6 px-4 py-2 rounded-full border backdrop-blur-sm transition-all"
+                                            style={{ 
+                                                backgroundColor: `${ELEMENTS[elementIndex + 2].color}11`, 
+                                                borderColor: `${ELEMENTS[elementIndex + 2].color}33` 
+                                            }}
+                                        >
+                                            <span 
+                                                className="text-[10px] font-mono tracking-widest uppercase opacity-80"
+                                                style={{ color: ELEMENTS[elementIndex + 2].color }}
+                                            >
+                                                Upcoming Transition: {ELEMENTS[elementIndex + 2].name} ({ELEMENTS[elementIndex + 2].symbol})
+                                            </span>
+                                        </div>
+                                    )}
+                                </motion.div>
+
+                                <div className="w-24 sm:w-48 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent mb-8 sm:mb-12" />
+                                <h2 className="text-[8px] sm:text-xs uppercase tracking-[0.3em] sm:tracking-[0.5em] text-white/40 mb-6 font-bold font-mono">Successive Synthesis Complete</h2>
+                                <div className="flex flex-col gap-2 sm:gap-4">
+                                {(ELEMENTS[elementIndex + 1]?.poem || ["The evolution continues...", ""]).map((line, idx) => (
+                                    <motion.p 
+                                        key={idx} 
+                                        initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
+                                        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                                        transition={{ delay: 0.5 + idx * 0.8, duration: 1.5, ease: "easeOut" }}
+                                        className="text-base sm:text-3xl font-serif italic text-white max-w-2xl leading-relaxed px-4 sm:px-6"
+                                    >
+                                        {line}
+                                    </motion.p>
+                                ))}
+                                </div>
+                                <div className="w-24 sm:w-48 h-[1px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-30 mt-8 sm:mb-12" />
+                            </div>
+                        </motion.div>
+                    );
+                })()}
 
                 {gameState === 'collapsed' && (
                     <motion.div 
@@ -788,7 +1113,7 @@ export default function App() {
                             <p className="text-slate-400 mb-8 sm:mb-12 text-sm sm:text-base">The helium squall was too fierce. Your core has gone dark.</p>
                             <button 
                                 onClick={resetGame}
-                                className="px-10 py-3 sm:px-12 sm:py-4 rounded-full border border-rose-500 text-rose-500 tracking-widest uppercase text-xs sm:text-sm hover:bg-rose-500/10"
+                                className="px-8 py-2.5 sm:px-10 sm:py-3 rounded-full border border-rose-500 text-rose-500 tracking-widest uppercase text-[10px] sm:text-xs hover:bg-rose-500/10"
                             >
                                 Emerge from Ash
                             </button>
@@ -803,11 +1128,59 @@ export default function App() {
                         className={`absolute inset-0 flex flex-col items-center justify-start sm:justify-center ${destiny === 'supernova' ? 'bg-[#1a0505]' : 'bg-[#0f172a]'} z-[200] p-6 sm:p-8 text-center overflow-y-auto`}
                     >
                         <div className="flex flex-col items-center py-12 sm:py-24 max-w-2xl shrink-0">
+                            {destiny === 'supernova' && (
+                                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+                                    {[...Array(12)].map((_, i) => (
+                                        <motion.div
+                                            key={i}
+                                            initial={{ scale: 0, opacity: 1 }}
+                                            animate={{ 
+                                                scale: [0, 15], 
+                                                opacity: [1, 0],
+                                                borderWidth: ["10px", "0px"]
+                                            }}
+                                            transition={{ 
+                                                duration: 1.5, 
+                                                delay: i * 0.15,
+                                                repeat: Infinity,
+                                                ease: "easeOut"
+                                            }}
+                                            className="absolute w-32 h-32 rounded-full border border-[#fbbf24] blur-[2px]"
+                                        />
+                                    ))}
+                                    {[...Array(40)].map((_, i) => (
+                                        <motion.div
+                                            key={`p-${i}`}
+                                            initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+                                            animate={{ 
+                                                x: (Math.random() - 0.5) * 800,
+                                                y: (Math.random() - 0.5) * 800,
+                                                opacity: 0,
+                                                scale: 0
+                                            }}
+                                            transition={{ 
+                                                duration: 1 + Math.random(), 
+                                                repeat: Infinity,
+                                                delay: Math.random() * 2,
+                                                ease: "easeOut"
+                                            }}
+                                            className="absolute w-2 h-2 bg-[#fbbf24] rounded-full blur-[1px]"
+                                        />
+                                    ))}
+                                </div>
+                            )}
+
                             <motion.div 
                                 initial={{ scale: 0 }}
-                                animate={{ scale: 1, rotate: destiny === 'supernova' ? [0, 5, -5, 0] : 0 }}
-                                transition={{ duration: 1, repeat: destiny === 'supernova' ? Infinity : 0 }}
-                                className={`w-32 h-32 sm:w-48 sm:h-48 rounded-full ${destiny === 'supernova' ? 'bg-[#fbbf24] shadow-[0_0_120px_rgba(251,191,36,0.8)]' : 'bg-slate-100 shadow-[0_0_100px_rgba(255,255,255,0.4)]'} flex flex-col items-center justify-center mb-8 sm:mb-12`}
+                                animate={{ 
+                                    scale: destiny === 'supernova' ? [0, 1.2, 1] : 1,
+                                    rotate: destiny === 'supernova' ? [0, 10, -10, 0] : 0 
+                                }}
+                                transition={{ 
+                                    scale: { duration: 0.8, ease: "backOut" },
+                                    rotate: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+                                }}
+                                className={`w-32 h-32 sm:w-48 sm:h-48 rounded-full ${destiny === 'supernova' ? 'bg-[#fbbf24] shadow-[0_0_120px_rgba(251,191,36,1)]' : 'bg-slate-100 shadow-[0_0_100px_rgba(255,255,255,0.4)]'} flex flex-col items-center justify-center mb-8 sm:mb-12 relative z-10`}
                             >
                                 {destiny === 'supernova' ? (
                                     <>
@@ -857,28 +1230,211 @@ export default function App() {
                                 }
                             </p>
 
-                            <button 
-                                onClick={resetGame}
-                                className={`px-10 py-3 sm:px-12 sm:py-4 rounded-full border ${destiny === 'supernova' ? 'border-[#fbbf24] text-[#fbbf24]' : 'border-blue-300 text-blue-300'} tracking-widest uppercase text-xs sm:text-sm hover:opacity-80 transition-all`}
-                            >
-                                Begin the cycle anew
-                            </button>
+                            <div className="flex flex-col sm:flex-row gap-4 mt-8 sm:mt-12">
+                                <button 
+                                    onClick={resetGame}
+                                    className={`px-8 py-2.5 sm:px-10 sm:py-3 rounded-full border ${destiny === 'supernova' ? 'border-[#fbbf24] text-[#fbbf24]' : 'border-blue-300 text-blue-300'} tracking-widest uppercase text-[10px] sm:text-xs hover:opacity-80 transition-all`}
+                                >
+                                    Begin the cycle anew
+                                </button>
+                                
+                                {destiny === 'supernova' && (
+                                    <button 
+                                        onClick={startNeutronMode}
+                                        className="px-8 py-2.5 sm:px-10 sm:py-3 rounded-full bg-[#fbbf24] text-slate-900 font-bold tracking-widest uppercase text-[10px] sm:text-xs hover:bg-white transition-all shadow-[0_0_30px_rgba(251,191,36,0.4)]"
+                                    >
+                                        Descend to Neutron Core
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </motion.div>
                 )}
+
+                {gameState === 'neutron' && (
+                    <div className="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-none z-[100] text-center">
+                        <motion.h2 
+                            animate={{ scale: [1, 1.1, 1] }}
+                            transition={{ duration: 0.5, repeat: Infinity }}
+                            className="text-[#fbbf24] font-mono text-2xl tracking-[0.5em] font-black uppercase"
+                        >
+                            Neutron Pulse
+                        </motion.h2>
+                        <div className="text-white font-mono text-4xl mt-2 tracking-tighter">
+                            {neutronScore.toLocaleString()}
+                        </div>
+                    </div>
+                )}
             </AnimatePresence>
 
-            {/* HUD Decorations */}
-            <div className="absolute bottom-8 left-8 flex items-center gap-4 text-slate-700 pointer-events-none uppercase text-[10px] tracking-[1em]">
-                <Shield className="w-3 h-3" /> Integrity Monitor
+            {/* Controls */}
+
+            <div className="absolute bottom-8 right-8 flex items-center gap-3 z-[100]">
+                {gameState === 'playing' && (
+                    <button 
+                        onClick={() => setIsPaused(!isPaused)}
+                        className="p-3 bg-[#0f172a] rounded-full shadow-[5px_5px_10px_#060a12,-5px_-5px_10px_#182442] text-slate-400 hover:text-emerald-400 transition-colors"
+                    >
+                        {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                    </button>
+                )}
+                <button 
+                    onClick={() => setIsMuted(!isMuted)}
+                    className="p-3 bg-[#0f172a] rounded-full shadow-[5px_5px_10px_#060a12,-5px_-5px_10px_#182442] text-slate-400 hover:text-blue-400 transition-colors"
+                >
+                    {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                </button>
+
+                <button 
+                    onClick={() => {
+                        setShowHelp(true);
+                        setIsPaused(true);
+                    }}
+                    className="p-3 bg-[#0f172a] rounded-full shadow-[5px_5px_10px_#060a12,-5px_-5px_10px_#182442] text-slate-400 hover:text-amber-400 transition-colors"
+                >
+                    <HelpCircle className="w-4 h-4" />
+                </button>
             </div>
 
-            <button 
-                onClick={() => setIsMuted(!isMuted)}
-                className="absolute bottom-8 right-8 p-4 bg-[#0f172a] rounded-full shadow-[5px_5px_10px_#060a12,-5px_-5px_10px_#182442] text-slate-600 hover:text-blue-400 z-[100]"
-            >
-                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-            </button>
+            {/* Help Modal */}
+            <AnimatePresence>
+                {showHelp && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-8 bg-black/80 backdrop-blur-md"
+                    >
+                        <motion.div 
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.9, y: 20 }}
+                            className="bg-slate-900 border border-white/10 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden shadow-2xl no-scrollbar"
+                        >
+                            <div className="p-8 sm:p-12 relative">
+                                <button 
+                                    onClick={() => setShowHelp(false)}
+                                    className="absolute top-6 right-6 p-2 text-slate-400 hover:text-white transition-colors"
+                                >
+                                    <Zap className="w-6 h-6 rotate-45" />
+                                </button>
+
+                                <div className="flex items-center gap-4 mb-8">
+                                    <div className="p-3 bg-amber-500/10 rounded-2xl border border-amber-500/20">
+                                        <BookOpen className="w-8 h-8 text-amber-500" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-3xl font-light tracking-tighter text-white">Stellar Manual</h2>
+                                        <p className="text-slate-400 text-sm tracking-widest uppercase">Navigation & Nucleosynthesis</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                                    {/* Mechanics Section */}
+                                    <section>
+                                        <div className="flex items-center gap-2 mb-6">
+                                            <Cpu className="w-5 h-5 text-emerald-400" />
+                                            <h3 className="text-xl text-emerald-400 font-medium tracking-tight">Mission Logs (How to Play)</h3>
+                                        </div>
+                                        
+                                        <div className="space-y-6">
+                                            <div className="bg-white/5 p-4 rounded-2xl border border-white/5 group">
+                                                <h4 className="text-slate-200 font-bold mb-2 flex items-center gap-2">
+                                                    <div className="w-1 h-4 bg-emerald-500 rounded-full" />
+                                                    The Action: Navigation
+                                                </h4>
+                                                <p className="text-slate-400 text-sm leading-relaxed">
+                                                    You control the star's nucleus. Move your cursor (or drag) to navigate. Shift your perspective near the edges to manipulate the <span className="text-blue-400">Time-Space Continuum</span>.
+                                                </p>
+                                                <ul className="mt-3 text-xs text-slate-500 space-y-1">
+                                                    <li>• <span className="text-blue-400">Right/Down:</span> Redshift (Fast forward, harder)</li>
+                                                    <li>• <span className="text-red-400">Left/Up:</span> Blueshift (Slow motion, safer)</li>
+                                                </ul>
+                                            </div>
+
+                                            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                                                <h4 className="text-slate-200 font-bold mb-2 flex items-center gap-2">
+                                                    <div className="w-1 h-4 bg-amber-500 rounded-full" />
+                                                    The Reward: Fusion
+                                                </h4>
+                                                <p className="text-slate-400 text-sm leading-relaxed">
+                                                    Capture <span className="text-blue-400">Alpha Particles</span> (blue pulses) to prepare for fusion. Gain mass with <span className="text-emerald-400">Isotopes</span>. Avoid <span className="text-rose-500">Helium Flux</span> that bleeds your internal stability.
+                                                </p>
+                                                <ul className="mt-3 text-xs text-slate-500 space-y-1">
+                                                    <li>• <span className="text-white">Convection Nodes:</span> Flow through nodes 1-2-3 for a temporary Magnetic Shield.</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    {/* Science Section */}
+                                    <section>
+                                        <div className="flex items-center gap-2 mb-6">
+                                            <Atom className="w-5 h-5 text-blue-400" />
+                                            <h3 className="text-xl text-blue-400 font-medium tracking-tight">The Stellar Forge</h3>
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            <p className="text-slate-300 text-sm leading-relaxed italic border-l-2 border-blue-500/30 pl-4 py-1">
+                                                "Stars are the engines of the universe, crushing protons until they yield gold."
+                                            </p>
+                                            
+                                            <p className="text-slate-400 text-sm leading-relaxed">
+                                                In our simulation, you begin as a <span className="text-white">Neutron</span> (or Proton). Through successive captures, you perform <span className="text-blue-400">nucleosynthesis</span>—the process of fusing lighter elements into heavier ones.
+                                            </p>
+
+                                            <div className="pt-4 border-t border-white/10">
+                                                <button 
+                                                    onClick={() => setShowNerdScience(!showNerdScience)}
+                                                    className="flex items-center justify-between w-full p-4 bg-blue-500/10 hover:bg-blue-500/20 rounded-2xl text-blue-400 transition-all font-mono text-xs uppercase tracking-widest border border-blue-500/20"
+                                                >
+                                                    Science for Nerds
+                                                    {showNerdScience ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                                </button>
+
+                                                <AnimatePresence>
+                                                    {showNerdScience && (
+                                                        <motion.div 
+                                                            initial={{ height: 0, opacity: 0 }}
+                                                            animate={{ height: 'auto', opacity: 1 }}
+                                                            exit={{ height: 0, opacity: 0 }}
+                                                            className="overflow-hidden"
+                                                        >
+                                                            <div className="pt-6 space-y-4 text-xs font-mono text-blue-300/70 leading-relaxed uppercase tracking-tighter">
+                                                                <p>
+                                                                    <span className="text-white font-bold">» Chandrasekhar Limit:</span> Stars above 1.4 solar masses cannot support themselves as white dwarfs. They collapse into Supernovae.
+                                                                </p>
+                                                                <p>
+                                                                    <span className="text-white font-bold">» Alpha Process:</span> Elements from Helium (2) to Iron (26) are primarily forged by the sequential capture of Helium-4 nuclei (Alpha particles).
+                                                                </p>
+                                                                <p>
+                                                                    <span className="text-white font-bold">» Doppler Effect:</span> Relativistic speed causes light to shift. Redshift increases the observer's interaction frequency, while Blueshift dilates time.
+                                                                </p>
+                                                                <p>
+                                                                    <span className="text-white font-bold">» The Iron Peak:</span> Iron (Fe) has the highest binding energy per nucleon. Beyond iron, fusion consumes energy rather than releasing it, leading to instant catastrophic core collapse.
+                                                                </p>
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+
+                                <div className="mt-12 pt-8 border-t border-white/5 flex justify-center">
+                                    <button 
+                                        onClick={() => setShowHelp(false)}
+                                        className="px-8 py-3 bg-emerald-500 text-slate-900 font-bold rounded-full uppercase tracking-widest text-[10px] hover:bg-white transition-all shadow-[0_0_40px_rgba(16,185,129,0.3)]"
+                                    >
+                                        Resume Core Authority
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
