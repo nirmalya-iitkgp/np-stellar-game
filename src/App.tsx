@@ -1014,11 +1014,9 @@ export default function App() {
                                 className="absolute bottom-6 sm:bottom-8 left-6 sm:left-8 right-56 pb-[env(safe-area-inset-bottom,0px)] group hidden md:flex items-center justify-between p-3 pr-8 bg-white text-black rounded-2xl z-[110] hover:scale-[1.01] transition-all shadow-2xl active:scale-95"
                             >
                                 <div className="flex items-center gap-4">
-                                    {/*
                                     <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center shadow-lg">
-                                        <Zap className="w-5 h-5 text-white" />
+                                        <Zap className="w-5 h-5 text-blue" />
                                     </div>
-                                    */}
                                     <div className="flex flex-col text-left">
                                         <span className="text-[10px] font-bold tracking-[0.4em] uppercase">Ignite the Void</span>
                                         <span className="text-[8px] opacity-40 uppercase tracking-widest font-mono">Stellar Genesis Sequence</span>
