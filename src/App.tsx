@@ -1015,7 +1015,7 @@ export default function App() {
                             >
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center shadow-lg">
-                                        <Zap className="w-5 h-5 text-blue" />
+                                        <Zap className="w-5 h-5 text-white" />
                                     </div>
                                     <div className="flex flex-col text-left">
                                         <span className="text-[10px] font-bold tracking-[0.4em] uppercase">Ignite the Void</span>
